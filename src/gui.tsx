@@ -1,7 +1,11 @@
 import { createRenderEffect, createSignal, onCleanup } from "solid-js";
 import { Plugin, Slot } from "@opencode/plugin/gui";
+import { Stats } from "../rpc-def.js";
 
 const REFRESH_MS = 15 * 60 * 1000;
+// Matches the server's 5 s cache TTL: each fresh sample is a ~5 s delta,
+// like Task Manager, instead of one number averaged over the whole poll gap.
+const STATS_MS = 5 * 1000;
 
 type Weather = { label: string; detail: string };
 
@@ -62,6 +66,34 @@ export default Plugin.define({
   setup(ctx) {
     const [weather, setWeather] = createSignal<Weather | undefined>(undefined);
     const [status, setStatus] = createSignal("⏳ …");
+    const [stats, setStats] = createSignal("");
+
+    // Hardware numbers come from the server part over RPC (the window has no
+    // access to nvidia-smi/OS memory). Read ctx.client at call time: it is
+    // replaced when the desktop server restarts.
+    const pollStats = async () => {
+      try {
+        const s: any = await ctx.client.rpc(Stats).stats({});
+        const vram = s.vramTotal > 0 ? Math.round((100 * s.vramUsed) / s.vramTotal) : -1;
+        setStats(
+          [
+            s.cpuPct >= 0 ? `CPU ${s.cpuPct}%` : "",
+            ["VRAM " + [s.gpuTemp >= 0 ? `${s.gpuTemp}°` : "", vram >= 0 ? `${vram}%` : ""]
+              .filter(Boolean)
+              .join(" / ")],
+            `💾 ${s.ramPct}%`,
+            s.netDownMbps >= 0 ? `🌐 ↓${s.netDownMbps} ↑${s.netUpMbps} Мбит/с` : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        );
+      } catch {
+        setStats("");
+      }
+    };
+    pollStats();
+    const statsId = setInterval(pollStats, STATS_MS);
+    onCleanup(() => clearInterval(statsId));
 
     // shortcut: manual DOM + createRenderEffect because Slot.render runs once and
     // a plain string would freeze at "⏳ …"; avoids solid-js/web (host may not resolve it).
@@ -75,8 +107,14 @@ export default Plugin.define({
         el.style.cssText = "margin-left:10px;font-size:12px;white-space:nowrap;cursor:default";
         createRenderEffect(() => {
           const w = weather();
-          el.textContent = input.active ? w ? w.label : status() || "" : "";
-          el.title = w ? w.detail : "Погода Москва";
+          if (!input.active) {
+            el.textContent = "";
+            return;
+          }
+          const head = w ? w.label : status() || "";
+          const st = stats();
+          el.textContent = head && st ? `${head} · ${st}` : head || st;
+          el.title = w ? `${w.detail}${st ? `\n${st}` : ""}` : "Погода Москва";
         });
         return el;
       },
