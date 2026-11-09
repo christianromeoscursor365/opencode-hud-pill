@@ -46,7 +46,7 @@ function symbolText(sym: string): string {
 
 async function loadWeather(): Promise<Weather> {
   const j = await getJson("https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=55.7558&lon=37.6173", {
-    "User-Agent": "opencode-weather-pill/1.0 https://github.com/christianromeoscursor365/opencode-weather-pill",
+    "User-Agent": "opencode-hud-pill/1.0 https://github.com/christianromeoscursor365/opencode-hud-pill",
   });
   const ts = j?.properties?.timeseries?.[0];
   if (!ts) throw new Error("met.no: no timeseries");

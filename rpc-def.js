@@ -2,7 +2,7 @@
 // part (index.js) and bundled into the GUI; avoids an @opencode/ import in the
 // window bundle. -1 means "metric unavailable".
 export const Stats = {
-  id: "weather-pill",
+  id: "hud-pill",
   methods: {
     stats: {
       input: { type: "object", properties: {}, additionalProperties: false },

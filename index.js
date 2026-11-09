@@ -78,7 +78,7 @@ async function net() {
 }
 
 export default Plugin.define({
-  id: "weather-pill",
+  id: "hud-pill",
   async setup(ctx) {
     await ctx.rpc.register(Stats, {
       stats: async () => {
