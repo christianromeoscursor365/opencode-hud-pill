@@ -1,0 +1,15 @@
+{
+  "name": "opencode-weather-pill",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./gui-experimental": "./dist/gui-experimental.cjs"
+  },
+  "devDependencies": {
+    "@opencode/plugin": "^2.2.6",
+    "solid-js": "^1.9.18",
+    "vite": "^8.3.6",
+    "vite-plugin-solid": "^2.11.15"
+  }
+}
